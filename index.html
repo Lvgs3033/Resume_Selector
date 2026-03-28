@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>NeuralHire — AI/ML Resume Screener</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+:root{
+  --bg:#07090b;--bg2:#0c1117;--bg3:#111820;--bg4:#16202b;--bg5:#1c2a38;
+  --b1:#1e2d3d;--b2:#2a3f55;--b3:#3a5570;
+  --g:#00ffb3;--gd:#00ffb320;--g2:#00cc8e;
+  --a:#ff6b35;--ad:#ff6b3520;
+  --y:#ffd166;--yd:#ffd16620;
+  --p:#c084fc;--pd:#c084fc20;
+  --blue:#60a5fa;--blued:#60a5fa20;
+  --t:#dce8f0;--t2:#7a9bb0;--t3:#3a5468;--t4:#1e3245;
+  --mono:'DM Mono',monospace;
+  --display:'Bebas Neue',cursive;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--t);
+  font-family:var(--mono);font-size:14px;line-height:1.6;
+  min-height:100vh;overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    repeating-linear-gradient(0deg,transparent,transparent 47px,var(--b1) 47px,var(--b1) 48px),
+    repeating-linear-gradient(90deg,transparent,transparent 47px,var(--b1) 47px,var(--b1) 48px);
+  opacity:.3;
+}
+body::after{
+  content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);
+  width:700px;height:400px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(0,255,179,.06) 0%,transparent 70%);
+  z-index:0;pointer-events:none;
+}
+.page{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 20px 80px}
+
+/* ── HEADER ── */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 0;
+  border-bottom:1px solid var(--b1);
+  position:sticky;top:0;background:rgba(7,9,11,.92);
+  backdrop-filter:blur(14px);z-index:100;
+}
+.logo{display:flex;align-items:center;gap:10px;cursor:default}
+.logo-sq{width:34px;height:34px;background:var(--g);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:20px;color:#000;}
+.logo-name{font-family:var(--display);font-size:22px;letter-spacing:2px}
+.logo-name span{color:var(--g)}
+.hdr-right{display:flex;align-items:center;gap:10px}
+.hdr-pill{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;border:1px solid var(--b2);color:var(--t3);border-radius:6px;padding:4px 10px;}
+.hdr-dot{width:8px;height:8px;border-radius:50%;background:var(--g);box-shadow:0 0 8px var(--g);animation:hblink 2s ease-in-out infinite;}
+@keyframes hblink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── HERO ── */
+.hero{
+  padding:60px 0 48px;
+  display:grid;grid-template-columns:1fr auto;gap:40px;align-items:center;
+  border-bottom:1px solid var(--b1);margin-bottom:48px;
+}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--g);margin-bottom:16px;}
+.hero-eyebrow::before{content:'';width:20px;height:1px;background:var(--g)}
+h1{font-family:var(--display);font-size:clamp(48px,8vw,88px);line-height:.95;letter-spacing:2px;margin-bottom:18px;}
+h1 .accent{color:var(--g);display:block}
+.hero-sub{color:var(--t2);font-size:14px;line-height:1.8;max-width:460px;margin-bottom:24px;}
+.tech-tags{display:flex;flex-wrap:wrap;gap:7px}
+.tech-tag{font-size:11px;padding:4px 11px;border-radius:5px;border:1px solid;letter-spacing:.5px;text-transform:uppercase;}
+.tt-g{border-color:var(--g);color:var(--g);background:var(--gd)}
+.tt-a{border-color:var(--a);color:var(--a);background:var(--ad)}
+.tt-y{border-color:var(--y);color:var(--y);background:var(--yd)}
+.tt-p{border-color:var(--p);color:var(--p);background:var(--pd)}
+.hero-stats{display:flex;flex-direction:column;gap:16px;background:var(--bg2);border:1px solid var(--b1);border-radius:12px;padding:24px 28px;min-width:160px;}
+.hstat-n{font-family:var(--display);font-size:34px;color:var(--g);line-height:1}
+.hstat-l{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3)}
+
+/* ── SECTION LABEL ── */
+.slabel{display:flex;align-items:center;gap:12px;font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--t3);margin-bottom:16px;}
+.slabel::after{content:'';flex:1;height:1px;background:var(--b1)}
+
+/* ── TAB SWITCHER ── */
+.tab-bar{
+  display:flex;gap:4px;background:var(--bg2);border:1px solid var(--b1);
+  border-radius:10px;padding:4px;margin-bottom:20px;width:fit-content;
+}
+.tab-btn{
+  font-family:var(--mono);font-size:12px;padding:8px 20px;border-radius:7px;
+  border:none;cursor:pointer;letter-spacing:.5px;
+  background:transparent;color:var(--t2);transition:all .18s;
+}
+.tab-btn.active{background:var(--g);color:#000;font-weight:500;}
+.tab-btn:hover:not(.active){background:var(--b1);color:var(--t)}
+
+/* ── CARD ── */
+.card{background:var(--bg2);border:1px solid var(--b1);border-radius:12px;padding:22px;transition:border-color .18s;}
+.card:hover{border-color:var(--b2)}
+.ctitle{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.ctitle-dot{width:5px;height:5px;border-radius:50%;background:var(--g)}
+
+/* ── TEXTAREA / INPUT ── */
+textarea,input[type=text]{
+  width:100%;background:var(--bg3);border:1px solid var(--b1);border-radius:8px;
+  color:var(--t);font-family:var(--mono);font-size:13px;
+  padding:12px 14px;resize:vertical;outline:none;
+  transition:border-color .15s,box-shadow .15s;
+}
+textarea:focus,input:focus{border-color:var(--g);box-shadow:0 0 0 3px var(--gd);}
+textarea::placeholder,input::placeholder{color:var(--t4)}
+
+/* ── UPLOAD ZONE ── */
+.upload-zone{
+  border:2px dashed var(--b2);border-radius:12px;
+  padding:44px 24px;text-align:center;cursor:pointer;
+  transition:all .2s;background:var(--bg3);
+  position:relative;
+}
+.upload-zone:hover,.upload-zone.drag-over{
+  border-color:var(--g);background:var(--gd);
+  box-shadow:0 0 0 4px var(--gd);
+}
+.upload-zone.drag-over{transform:scale(1.01)}
+.uz-icon{
+  width:56px;height:56px;background:var(--gd);border:1px solid var(--g);
+  border-radius:14px;display:flex;align-items:center;justify-content:center;
+  margin:0 auto 16px;font-size:26px;
+  transition:transform .2s;
+}
+.upload-zone:hover .uz-icon{transform:translateY(-4px)}
+.uz-title{font-family:var(--display);font-size:22px;letter-spacing:1px;color:var(--t);margin-bottom:6px}
+.uz-sub{font-size:12px;color:var(--t2);margin-bottom:16px;line-height:1.7}
+.uz-types{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.uz-type{font-size:10px;padding:3px 10px;border-radius:100px;border:1px solid var(--b2);color:var(--t3);letter-spacing:.5px;text-transform:uppercase;}
+.uz-type.active{border-color:var(--g);color:var(--g);background:var(--gd)}
+#file-input{display:none}
+.uz-browse{
+  display:inline-flex;align-items:center;gap:7px;margin-top:14px;
+  font-size:12px;padding:8px 20px;border-radius:7px;
+  background:var(--g);color:#000;border:none;cursor:pointer;
+  font-family:var(--mono);font-weight:500;transition:all .15s;
+}
+.uz-browse:hover{background:#00ffcc;transform:translateY(-1px)}
+
+/* ── FILE LIST ── */
+.file-list{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.file-item{
+  background:var(--bg3);border:1px solid var(--b1);border-radius:10px;
+  overflow:hidden;animation:fadeup .3s ease;
+}
+@keyframes fadeup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fi-header{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;border-bottom:1px solid var(--b1);background:var(--bg2);
+}
+.fi-icon{
+  width:30px;height:30px;border-radius:7px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:15px;
+}
+.fi-icon.pdf{background:rgba(255,107,53,.15);border:1px solid rgba(255,107,53,.3)}
+.fi-icon.txt{background:var(--gd);border:1px solid var(--g)}
+.fi-icon.doc{background:var(--blued);border:1px solid var(--blue)}
+.fi-name-wrap{flex:1;min-width:0}
+.fi-name{font-size:13px;font-weight:500;color:var(--t);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fi-meta{font-size:10px;color:var(--t3);letter-spacing:.3px}
+.fi-status{font-size:10px;padding:2px 8px;border-radius:100px;border:1px solid;letter-spacing:.3px}
+.fi-status.parsing{border-color:var(--y);color:var(--y);background:var(--yd)}
+.fi-status.done{border-color:var(--g);color:var(--g);background:var(--gd)}
+.fi-status.error{border-color:var(--a);color:var(--a);background:var(--ad)}
+.fi-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:17px;padding:0 3px;line-height:1;transition:color .15s;flex-shrink:0;}
+.fi-del:hover{color:var(--a)}
+.fi-body{padding:10px 14px}
+.fi-name-edit{margin-bottom:8px}
+.fi-name-input{
+  width:100%;background:transparent;border:none;border-bottom:1px solid var(--b1);
+  color:var(--t);font-family:var(--display);font-size:14px;letter-spacing:.5px;
+  padding:4px 0;outline:none;transition:border-color .15s;
+}
+.fi-name-input:focus{border-color:var(--g)}
+.fi-preview{
+  font-size:11px;color:var(--t2);line-height:1.6;
+  max-height:72px;overflow:hidden;display:-webkit-box;
+  -webkit-line-clamp:4;-webkit-box-orient:vertical;
+  background:var(--bg4);border-radius:6px;padding:8px 10px;
+  border:1px solid var(--b1);font-style:italic;
+}
+.fi-skills{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.fi-skill{font-size:10px;padding:2px 7px;border-radius:100px;background:var(--gd);border:1px solid var(--g);color:var(--g)}
+.fi-skill.more{background:var(--bg4);border-color:var(--b2);color:var(--t3)}
+.fi-progress{height:2px;background:var(--b1);margin:0}
+.fi-progress-bar{height:100%;background:var(--g);width:0;transition:width .4s ease}
+
+/* ── PASTE MODE SLOTS ── */
+.slot-list{display:flex;flex-direction:column;gap:12px}
+.slot{border:1px solid var(--b1);border-radius:10px;overflow:hidden;background:var(--bg3);animation:fadeup .3s ease;}
+.slot-hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg2);border-bottom:1px solid var(--b1);}
+.slot-num{width:22px;height:22px;border-radius:5px;flex-shrink:0;background:var(--gd);border:1px solid var(--g);color:var(--g);font-size:10px;display:flex;align-items:center;justify-content:center;}
+.slot-name{flex:1;background:transparent;border:none;color:var(--t);font-family:var(--display);font-size:15px;letter-spacing:1px;outline:none;min-width:0;}
+.slot-name::placeholder{color:var(--t4)}
+.slot-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;padding:0 3px;line-height:1;transition:color .15s;}
+.slot-del:hover{color:var(--a)}
+.slot-body{padding:12px 14px}
+.slot-body textarea{min-height:90px;font-size:12px;}
+.slot-foot{padding:7px 14px 10px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;min-height:34px;}
+.sf-tag{font-size:10px;padding:2px 8px;border-radius:100px;background:var(--bg4);border:1px solid var(--b2);color:var(--t3);}
+.sf-tag.on{background:var(--gd);border-color:var(--g);color:var(--g)}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;font-weight:500;padding:9px 18px;border-radius:7px;cursor:pointer;border:1px solid;transition:all .15s;white-space:nowrap;}
+.btn-ghost{background:transparent;color:var(--t2);border-color:var(--b2)}
+.btn-ghost:hover{border-color:var(--g);color:var(--g);background:var(--gd)}
+.btn-danger{background:transparent;color:var(--a);border-color:var(--ad)}
+.btn-danger:hover{background:var(--ad);border-color:var(--a)}
+.btn-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+.btn-row .count{margin-left:auto;font-size:11px;color:var(--t3)}
+
+/* ── SETTINGS ── */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+
+/* ── RUN BUTTON ── */
+.run-wrap{
+  text-align:center;padding:44px 0;
+  border-top:1px solid var(--b1);border-bottom:1px solid var(--b1);
+  margin:48px 0;position:relative;overflow:hidden;
+}
+.run-wrap::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(-45deg,transparent,transparent 8px,rgba(0,255,179,.012) 8px,rgba(0,255,179,.012) 9px);
+}
+.run-btn{
+  position:relative;font-family:var(--display);font-size:24px;letter-spacing:3px;
+  padding:18px 56px;border-radius:10px;background:var(--g);color:#000;border:none;cursor:pointer;
+  display:inline-flex;align-items:center;gap:14px;transition:all .2s;
+}
+.run-btn:hover{background:#00ffcc;transform:translateY(-2px);box-shadow:0 8px 40px rgba(0,255,179,.35);}
+.run-btn:active{transform:none;box-shadow:none}
+.run-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.run-btn svg{transition:transform .2s}
+.run-btn:hover svg{transform:rotate(90deg)}
+.run-sub{font-size:11px;color:var(--t3);margin-top:12px;letter-spacing:1px;text-transform:uppercase}
+
+/* ── LOADING ── */
+#loading{display:none;text-align:center;padding:64px 0}
+.spin{width:52px;height:52px;border-radius:50%;border:2px solid var(--b2);border-top-color:var(--g);animation:spin 1s linear infinite;margin:0 auto 20px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-title{font-family:var(--display);font-size:22px;letter-spacing:2px;margin-bottom:14px}
+.load-steps{display:flex;flex-direction:column;gap:5px;align-items:center}
+.ls{font-size:12px;color:var(--t3);transition:color .2s}
+.ls.run{color:var(--g)}
+.ls.ok{color:var(--t2)}
+
+/* ── ERROR ── */
+.err-msg{display:none;background:var(--ad);border:1px solid var(--a);border-radius:8px;padding:11px 15px;color:var(--a);font-size:13px;margin-top:10px;}
+
+/* ── RESULTS ── */
+#results{display:none}
+
+/* WINNER */
+.winner{
+  background:linear-gradient(135deg,var(--bg2) 0%,#061510 100%);
+  border:1px solid var(--g);border-radius:14px;padding:30px;
+  margin-bottom:36px;position:relative;overflow:hidden;animation:fadeup .5s ease;
+}
+.winner::before{content:'';position:absolute;top:-80px;right:-80px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(0,255,179,.12) 0%,transparent 70%);pointer-events:none;}
+.winner::after{content:'WINNER';position:absolute;bottom:18px;right:24px;font-family:var(--display);font-size:72px;color:rgba(0,255,179,.04);letter-spacing:4px;pointer-events:none;line-height:1;}
+.w-crown{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--g);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.w-crown::before{content:'★';font-size:12px}
+.w-name{font-family:var(--display);font-size:clamp(30px,5vw,52px);letter-spacing:2px;line-height:1;margin-bottom:6px;}
+.w-score-row{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.w-big{font-family:var(--display);font-size:clamp(44px,8vw,70px);color:var(--g);line-height:1;}
+.w-lbl{color:var(--t2);font-size:13px;line-height:1.6}
+.w-meta{display:flex;flex-wrap:wrap;gap:18px}
+.w-mi .k{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin-bottom:2px}
+.w-mi .v{font-size:14px;color:var(--t)}
+.winner-skills{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+.ws-tag{font-size:11px;padding:3px 10px;border-radius:100px;background:var(--gd);border:1px solid var(--g);color:var(--g);}
+
+/* RANKED GRID */
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;margin-bottom:44px;}
+.rcard{background:var(--bg2);border:1px solid var(--b1);border-radius:12px;padding:18px;animation:fadeup .4s ease both;transition:border-color .15s,transform .15s;}
+.rcard:hover{border-color:var(--b2);transform:translateY(-2px)}
+.rcard.r1{border-color:var(--g);background:linear-gradient(135deg,var(--bg2),#061510)}
+.rcard.r2{border-color:var(--y)}
+.rcard.r3{border-color:#cd7f32}
+.rc-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px}
+.rc-badge{width:32px;height:32px;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:15px;}
+.rb1{background:var(--g);color:#000}
+.rb2{background:var(--y);color:#000}
+.rb3{background:#cd7f32;color:#000}
+.rbn{background:var(--bg3);color:var(--t2);border:1px solid var(--b2);font-size:12px}
+.rc-name{font-family:var(--display);font-size:17px;letter-spacing:.5px;line-height:1.1}
+.rc-status{font-size:10px;letter-spacing:.5px;margin-top:3px}
+.rc-status.yes{color:var(--g)}
+.rc-status.no{color:var(--t3)}
+.rc-file-badge{font-size:9px;padding:1px 6px;border-radius:4px;border:1px solid var(--b2);color:var(--t3);margin-top:3px;display:inline-block;letter-spacing:.3px}
+.rc-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.rc-bar-track{flex:1;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.rc-bar-fill{height:100%;border-radius:2px;transition:width 1s cubic-bezier(.2,.6,.36,1)}
+.bf1{background:var(--g)}.bf2{background:var(--y)}.bf3{background:#cd7f32}.bfn{background:var(--t3)}
+.rc-pct{font-family:var(--display);font-size:16px;min-width:48px;text-align:right;}
+.rc-skills{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.rsk{font-size:10px;padding:2px 7px;border-radius:100px;background:var(--bg3);border:1px solid var(--b2);color:var(--t3);}
+.rsk.hi{background:var(--gd);border-color:var(--g);color:var(--g)}
+.rsk.hi2{background:var(--yd);border-color:var(--y);color:var(--y)}
+.rc-foot{display:flex;justify-content:space-between;font-size:11px;color:var(--t3);padding-top:8px;border-top:1px solid var(--b1);}
+
+/* RADAR */
+.radar-card{background:var(--bg2);border:1px solid var(--b1);border-radius:12px;padding:24px;margin-bottom:36px;}
+.radar-title{font-family:var(--display);font-size:17px;letter-spacing:1px;margin-bottom:20px;display:flex;align-items:center;gap:8px;}
+.radar-title::before{content:'';width:4px;height:20px;background:var(--g);border-radius:2px}
+#radarCanvas{display:block;margin:0 auto}
+.radar-legend{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;margin-top:16px}
+.rleg{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--t2)}
+.rleg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* MATRIX */
+.matrix-card{background:var(--bg2);border:1px solid var(--b1);border-radius:12px;padding:24px;margin-bottom:36px;overflow-x:auto;}
+.matrix-title{font-family:var(--display);font-size:17px;letter-spacing:1px;margin-bottom:20px;display:flex;align-items:center;gap:8px;}
+.matrix-title::before{content:'';width:4px;height:20px;background:var(--g);border-radius:2px}
+.mtable{width:100%;border-collapse:collapse;font-size:12px;min-width:500px}
+.mtable th{padding:8px 12px;text-align:left;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3);border-bottom:1px solid var(--b1);background:var(--bg3);}
+.mtable th.center{text-align:center}
+.mtable td{padding:8px 12px;border-bottom:1px solid var(--b1);vertical-align:middle}
+.mtable tr:hover td{background:var(--bg3)}
+.mtable tr:last-child td{border-bottom:none}
+.mcat td{background:var(--bg4);color:var(--t3);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:6px 12px;}
+.skill-cell{color:var(--t);font-weight:500}
+.mcheck{text-align:center}
+.myes{color:var(--g)}
+.mno{color:var(--b2)}
+
+/* SUMMARY */
+.summary-card{background:var(--bg2);border:1px solid var(--b1);border-radius:12px;padding:24px;margin-bottom:36px;}
+.summary-title{font-family:var(--display);font-size:17px;letter-spacing:1px;margin-bottom:20px;display:flex;align-items:center;gap:8px;}
+.summary-title::before{content:'';width:4px;height:20px;background:var(--g);border-radius:2px}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.sitem{background:var(--bg3);border:1px solid var(--b1);border-radius:8px;padding:14px}
+.sitem.accent{border-color:var(--g);background:var(--gd)}
+.sk{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin-bottom:4px}
+.sv{font-family:var(--display);font-size:18px;letter-spacing:.5px;color:var(--t)}
+.sitem.accent .sv{color:var(--g)}
+.ss{font-size:11px;color:var(--t2);margin-top:2px}
+
+.reset-row{text-align:center;padding:28px 0 16px}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--g)}
+
+@media(max-width:640px){
+  .hero{grid-template-columns:1fr;gap:24px}
+  .hero-stats{flex-direction:row;min-width:unset}
+  .rgrid{grid-template-columns:1fr}
+  .settings-grid{grid-template-columns:1fr}
+  .tab-bar{width:100%}
+  .tab-btn{flex:1;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="page" style="padding:0 20px;display:flex;align-items:center;justify-content:space-between;width:100%;max-width:1100px;margin:0 auto">
+    <div class="logo">
+      <div class="logo-sq">N</div>
+      <div class="logo-name">Neural<span>Hire</span></div>
+    </div>
+    <div class="hdr-right">
+      <div class="hdr-pill">AI/ML Screener v2</div>
+      <div class="hdr-dot"></div>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow">Upload · Analyze · Shortlist</div>
+    <h1>RESUME<span class="accent">SCREEN AI</span></h1>
+    <p class="hero-sub">Upload PDF, TXT, or DOC resumes — or paste text directly. Instantly ranked results powered by TF-IDF + Cosine Similarity for AI/ML roles.</p>
+    <div class="tech-tags">
+      <span class="tech-tag tt-g">PDF Upload</span>
+      <span class="tech-tag tt-a">TF-IDF</span>
+      <span class="tech-tag tt-y">Cosine Similarity</span>
+      <span class="tech-tag tt-p">In-Browser</span>
+    </div>
+  </div>
+  <div class="hero-stats">
+    <div class="hstat"><div class="hstat-n">PDF</div><div class="hstat-l">+TXT Support</div></div>
+    <div class="hstat"><div class="hstat-n">40+</div><div class="hstat-l">Skills Tracked</div></div>
+    <div class="hstat"><div class="hstat-n">100%</div><div class="hstat-l">Private / Local</div></div>
+  </div>
+</div>
+
+<!-- JOB DESCRIPTION -->
+<div style="margin-bottom:40px">
+  <div class="slabel">📋 Job Description</div>
+  <div class="card">
+    <div class="ctitle"><span class="ctitle-dot"></span>AI / ML Engineer — Target Role</div>
+    <textarea id="jd" rows="8" placeholder="Paste job description…">We are looking for a Senior Machine Learning Engineer with 4+ years of experience.
+
+Requirements:
+- Strong Python (pandas, numpy, scikit-learn)
+- Deep Learning with TensorFlow or PyTorch
+- NLP: spaCy, NLTK, Hugging Face Transformers, LLM, RAG pipelines
+- Computer Vision: OpenCV, YOLO, CNNs
+- MLOps: Docker, Kubernetes, CI/CD, MLflow, DVC
+- Cloud: AWS SageMaker, GCP Vertex AI, or Azure ML
+- SQL and NoSQL databases (PostgreSQL, MongoDB)
+- Git, Agile/Scrum
+- Bonus: published research, Kaggle, open-source contributions</textarea>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div style="margin-bottom:40px">
+  <div class="slabel">⚙️ Settings</div>
+  <div class="card settings-grid">
+    <div>
+      <div class="ctitle"><span class="ctitle-dot"></span>Shortlist Threshold</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <input type="range" id="thresh" min="0" max="100" value="15" step="1" style="flex:1;accent-color:var(--g);cursor:pointer">
+        <span id="thresh-val" style="font-family:var(--display);font-size:18px;min-width:50px;color:var(--g)">0.15</span>
+      </div>
+      <div style="font-size:11px;color:var(--t3);margin-top:4px">Min cosine similarity score to shortlist</div>
+    </div>
+    <div>
+      <div class="ctitle"><span class="ctitle-dot"></span>Top-N Override</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <input type="range" id="topn" min="0" max="10" value="0" step="1" style="flex:1;accent-color:var(--g);cursor:pointer">
+        <span id="topn-val" style="font-family:var(--display);font-size:18px;min-width:30px;color:var(--g)">0</span>
+      </div>
+      <div style="font-size:11px;color:var(--t3);margin-top:4px">0 = threshold mode. N = always pick best N</div>
+    </div>
+  </div>
+</div>
+
+<!-- RESUMES INPUT -->
+<div style="margin-bottom:0">
+  <div class="slabel">📄 Candidate Resumes</div>
+
+  <!-- TAB SWITCHER -->
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-upload" onclick="switchTab('upload')">⬆ Upload Files</button>
+    <button class="tab-btn" id="tab-paste" onclick="switchTab('paste')">✎ Paste Text</button>
+  </div>
+
+  <!-- UPLOAD TAB -->
+  <div id="panel-upload">
+    <div class="upload-zone" id="drop-zone"
+      ondragover="handleDragOver(event)"
+      ondragleave="handleDragLeave(event)"
+      ondrop="handleDrop(event)"
+      onclick="document.getElementById('file-input').click()">
+      <div class="uz-icon">📂</div>
+      <div class="uz-title">DROP RESUMES HERE</div>
+      <div class="uz-sub">
+        Drag & drop multiple files at once, or click to browse.<br>
+        Each file = one candidate resume.
+      </div>
+      <div class="uz-types">
+        <span class="uz-type active">PDF</span>
+        <span class="uz-type active">TXT</span>
+        <span class="uz-type active">DOC</span>
+        <span class="uz-type active">DOCX</span>
+        <span class="uz-type active">MD</span>
+      </div>
+      <button class="uz-browse" onclick="event.stopPropagation();document.getElementById('file-input').click()">
+        📁 Browse Files
+      </button>
+    </div>
+    <input type="file" id="file-input" multiple accept=".pdf,.txt,.doc,.docx,.md,.rtf" onchange="handleFileSelect(event)"/>
+    <div class="file-list" id="file-list"></div>
+    <div class="btn-row">
+      <button class="btn btn-danger" onclick="clearFiles()">✕ Clear All Files</button>
+      <span class="count" id="file-cnt">0 files loaded</span>
+    </div>
+  </div>
+
+  <!-- PASTE TAB -->
+  <div id="panel-paste" style="display:none">
+    <div class="slot-list" id="slot-list"></div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="addSlot()">＋ Add Resume</button>
+      <button class="btn btn-danger" onclick="clearSlots()">✕ Clear All</button>
+      <span class="count" id="slot-cnt">0 resumes</span>
+    </div>
+  </div>
+
+  <div class="err-msg" id="err"></div>
+</div>
+
+<!-- RUN BUTTON -->
+<div class="run-wrap">
+  <button class="run-btn" id="run-btn" onclick="runAnalysis()">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="5 3 19 12 5 21 5 3"/>
+    </svg>
+    RUN ANALYSIS
+  </button>
+  <div class="run-sub">100% in-browser · resumes never leave your device</div>
+</div>
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="spin"></div>
+  <div class="load-title">PROCESSING RESUMES</div>
+  <div class="load-steps">
+    <div class="ls" id="ls1">○ Reading uploaded files</div>
+    <div class="ls" id="ls2">○ Tokenizing & cleaning text</div>
+    <div class="ls" id="ls3">○ Building TF-IDF vectors</div>
+    <div class="ls" id="ls4">○ Computing cosine similarity</div>
+    <div class="ls" id="ls5">○ Ranking & shortlisting</div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="results">
+  <div class="slabel">🏆 Best Candidate</div>
+  <div class="winner" id="winner-box">
+    <div class="w-crown">Best Match for AI/ML Role</div>
+    <div class="w-name" id="w-name">—</div>
+    <div class="w-score-row">
+      <div class="w-big" id="w-big">—</div>
+      <div class="w-lbl">Match Score<br><span style="font-size:11px;color:var(--t3)">TF-IDF Cosine Similarity</span></div>
+    </div>
+    <div class="w-meta" id="w-meta"></div>
+    <div class="winner-skills" id="w-skills"></div>
+  </div>
+
+  <div class="slabel">📊 All Candidates Ranked</div>
+  <div class="rgrid" id="rgrid"></div>
+
+  <div class="slabel">🕸 Skill Radar — Top 4</div>
+  <div class="radar-card">
+    <div class="radar-title">Multi-Dimensional Skill Comparison</div>
+    <canvas id="radarCanvas" width="480" height="360"></canvas>
+    <div class="radar-legend" id="rleg"></div>
+  </div>
+
+  <div class="slabel">🗂 Skills Coverage Matrix</div>
+  <div class="matrix-card">
+    <div class="matrix-title">Required Skills — Candidate Coverage</div>
+    <table class="mtable" id="mtable"></table>
+  </div>
+
+  <div class="slabel">📈 Screening Summary</div>
+  <div class="summary-card">
+    <div class="summary-title">Quick Verdict</div>
+    <div class="sgrid" id="sgrid"></div>
+  </div>
+
+  <div class="reset-row">
+    <button class="btn btn-ghost" onclick="resetAll()">← Start Over</button>
+  </div>
+</div>
+
+</div><!-- /page -->
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────
+//  PDF.js setup
+// ─────────────────────────────────────────────────────────────────────────
+if (typeof pdfjsLib !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  CONSTANTS
+// ─────────────────────────────────────────────────────────────────────────
+const SKILL_CATS = {
+  'Languages & Core':   ['python','java','javascript','scala','r','matlab','julia'],
+  'ML / DL Frameworks': ['tensorflow','pytorch','keras','jax','xgboost','lightgbm'],
+  'NLP & LLMs':         ['nlp','spacy','nltk','transformers','huggingface','llm','bert','gpt','rag','langchain'],
+  'Computer Vision':    ['computervision','opencv','yolo','cnn','imageprocessing'],
+  'ML Libraries':       ['scikitlearn','sklearn','pandas','numpy','scipy','matplotlib'],
+  'MLOps & DevOps':     ['mlops','docker','kubernetes','mlflow','dvc','airflow','cicd','jenkins'],
+  'Cloud & Big Data':   ['aws','gcp','azure','sagemaker','vertexai','spark','hadoop','databricks'],
+  'Databases':          ['sql','postgresql','mysql','mongodb','redis','elasticsearch','dynamodb'],
+  'Practices':          ['git','agile','scrum','linux','research','kaggle','communication','teamwork'],
+};
+const ALL_SKILLS = Object.values(SKILL_CATS).flat();
+
+const RADAR_AXES = [
+  {label:'ML/DL',    skills:['tensorflow','pytorch','keras','xgboost','scikitlearn']},
+  {label:'NLP/LLM',  skills:['nlp','spacy','nltk','transformers','huggingface','llm','bert','gpt','rag','langchain']},
+  {label:'Vision',   skills:['computervision','opencv','yolo','cnn']},
+  {label:'MLOps',    skills:['docker','kubernetes','mlops','mlflow','dvc','cicd']},
+  {label:'Cloud',    skills:['aws','gcp','azure','sagemaker','spark','databricks']},
+  {label:'Python',   skills:['python','pandas','numpy','scipy']},
+  {label:'Databases',skills:['sql','postgresql','mongodb','redis','elasticsearch']},
+  {label:'Practices',skills:['git','agile','scrum','research','kaggle']},
+];
+const PAL = ['#00ffb3','#ffd166','#cd7f32','#60a5fa','#c084fc','#ff6b6b','#4ecdc4','#ffa94d'];
+
+// ─────────────────────────────────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────────────────────────────────
+let activeTab  = 'upload';
+let uploadedFiles = [];   // {id, file, name, text, status, skills, exp}
+let pasteSlots    = [];
+let slotId = 0;
+
+// ─────────────────────────────────────────────────────────────────────────
+//  TAB SWITCHING
+// ─────────────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('panel-upload').style.display = tab==='upload'?'block':'none';
+  document.getElementById('panel-paste').style.display  = tab==='paste' ?'block':'none';
+  document.getElementById('tab-upload').className = 'tab-btn'+(tab==='upload'?' active':'');
+  document.getElementById('tab-paste').className  = 'tab-btn'+(tab==='paste' ?' active':'');
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  DRAG & DROP
+// ─────────────────────────────────────────────────────────────────────────
+function handleDragOver(e) {
+  e.preventDefault(); e.stopPropagation();
+  document.getElementById('drop-zone').classList.add('drag-over');
+}
+function handleDragLeave(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag-over');
+}
+function handleDrop(e) {
+  e.preventDefault(); e.stopPropagation();
+  document.getElementById('drop-zone').classList.remove('drag-over');
+  const files = Array.from(e.dataTransfer.files);
+  processFiles(files);
+}
+function handleFileSelect(e) {
+  const files = Array.from(e.target.files);
+  processFiles(files);
+  e.target.value = '';
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  FILE PROCESSING
+// ─────────────────────────────────────────────────────────────────────────
+const ALLOWED = ['pdf','txt','doc','docx','md','rtf'];
+
+function processFiles(files) {
+  files.forEach(file => {
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!ALLOWED.includes(ext)) return;
+    const id = Date.now() + Math.random();
+    const entry = {
+      id, file, ext,
+      name: file.name.replace(/\.[^.]+$/, ''),
+      originalName: file.name,
+      text: '', status: 'parsing', skills: [], exp: 0, email: ''
+    };
+    uploadedFiles.push(entry);
+    renderFileList();
+    readFile(entry);
+  });
+}
+
+async function readFile(entry) {
+  setFileProgress(entry.id, 20);
+  try {
+    if (entry.ext === 'pdf') {
+      entry.text = await extractPDF(entry.file);
+    } else {
+      entry.text = await readAsText(entry.file);
+    }
+    setFileProgress(entry.id, 80);
+    entry.skills = extractSkillsUI(entry.text);
+    entry.exp    = extractExp(entry.text);
+    entry.email  = extractEmail(entry.text);
+    entry.status = 'done';
+    setFileProgress(entry.id, 100);
+    setTimeout(() => renderFileList(), 200);
+  } catch(err) {
+    entry.status = 'error';
+    entry.text   = '';
+    renderFileList();
+  }
+}
+
+function readAsText(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload  = e => resolve(e.target.result);
+    r.onerror = reject;
+    r.readAsText(file);
+  });
+}
+
+async function extractPDF(file) {
+  if (typeof pdfjsLib === 'undefined') {
+    // fallback: try reading as text
+    return await readAsText(file);
+  }
+  const ab  = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data: ab}).promise;
+  let text  = '';
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page    = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    text += content.items.map(i => i.str).join(' ') + '\n';
+  }
+  return text;
+}
+
+function setFileProgress(id, pct) {
+  const bar = document.getElementById(`fp-${id}`);
+  if (bar) bar.style.width = pct + '%';
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  RENDER FILE LIST
+// ─────────────────────────────────────────────────────────────────────────
+function renderFileList() {
+  const el = document.getElementById('file-list');
+  el.innerHTML = '';
+  uploadedFiles.forEach(f => {
+    const iconCls = f.ext==='pdf'?'pdf':f.ext==='txt'||f.ext==='md'?'txt':'doc';
+    const iconChar = f.ext==='pdf'?'📄':f.ext==='txt'||f.ext==='md'?'📝':'📃';
+    const sz = f.file.size < 1024 ? f.file.size+'B'
+             : f.file.size < 1048576 ? (f.file.size/1024).toFixed(1)+'KB'
+             : (f.file.size/1048576).toFixed(1)+'MB';
+    const statusHtml =
+      f.status==='parsing' ? '<span class="fi-status parsing">Parsing…</span>' :
+      f.status==='done'    ? '<span class="fi-status done">✓ Ready</span>' :
+                             '<span class="fi-status error">✗ Error</span>';
+
+    const previewHtml = f.text
+      ? `<div class="fi-preview">${esc(f.text.slice(0,300))}</div>` : '';
+    const skillsHtml = f.skills.length
+      ? `<div class="fi-skills">${f.skills.slice(0,8).map(s=>`<span class="fi-skill">${s}</span>`).join('')}
+         ${f.skills.length>8?`<span class="fi-skill more">+${f.skills.length-8}</span>`:''}</div>` : '';
+
+    const d = document.createElement('div');
+    d.className='file-item'; d.id=`fi-${f.id}`;
+    d.innerHTML = `
+      <div class="fi-progress"><div class="fi-progress-bar" id="fp-${f.id}" style="width:${f.status==='done'?'100':f.status==='parsing'?'30':'0'}%"></div></div>
+      <div class="fi-header">
+        <div class="fi-icon ${iconCls}">${iconChar}</div>
+        <div class="fi-name-wrap">
+          <div class="fi-name">${esc(f.originalName)}</div>
+          <div class="fi-meta">${sz} · ${f.ext.toUpperCase()}${f.exp>0?' · '+f.exp+' yrs exp':''}</div>
+        </div>
+        ${statusHtml}
+        <button class="fi-del" onclick="removeFile('${f.id}')" title="Remove">×</button>
+      </div>
+      <div class="fi-body">
+        <div class="fi-name-edit">
+          <input class="fi-name-input" placeholder="Candidate name (edit if needed)…"
+            value="${esc(f.name)}"
+            oninput="uploadedFiles.find(x=>x.id=='${f.id}').name=this.value"/>
+        </div>
+        ${previewHtml}
+        ${skillsHtml}
+      </div>`;
+    el.appendChild(d);
+  });
+  const done = uploadedFiles.filter(f=>f.status==='done').length;
+  document.getElementById('file-cnt').textContent =
+    `${uploadedFiles.length} file${uploadedFiles.length!==1?'s':''} loaded` +
+    (done<uploadedFiles.length ? ` · ${done} ready` : ' · all ready');
+}
+
+function removeFile(id) {
+  uploadedFiles = uploadedFiles.filter(f=>String(f.id)!==String(id));
+  renderFileList();
+}
+function clearFiles() { uploadedFiles=[]; renderFileList(); }
+
+// ─────────────────────────────────────────────────────────────────────────
+//  PASTE SLOTS
+// ─────────────────────────────────────────────────────────────────────────
+function addSlot(pre={}) {
+  const id=++slotId;
+  pasteSlots.push({id, name:pre.name||'', text:pre.text||''});
+  renderSlots();
+}
+function removeSlot(id) { pasteSlots=pasteSlots.filter(s=>s.id!==id); renderSlots(); }
+function clearSlots()   { pasteSlots=[]; slotId=0; renderSlots(); }
+
+function renderSlots() {
+  const el=document.getElementById('slot-list');
+  el.innerHTML='';
+  pasteSlots.forEach((s,i) => {
+    const d=document.createElement('div');
+    d.className='slot';d.id=`slot-${s.id}`;
+    d.innerHTML=`
+      <div class="slot-hdr">
+        <div class="slot-num">${i+1}</div>
+        <input class="slot-name" placeholder="Candidate name…" value="${esc(s.name)}"
+          oninput="pasteSlots.find(x=>x.id===${s.id}).name=this.value"/>
+        <button class="slot-del" onclick="removeSlot(${s.id})">×</button>
+      </div>
+      <div class="slot-body">
+        <textarea rows="5" placeholder="Paste resume text…"
+          oninput="updatePasteText(${s.id},this.value)">${esc(s.text)}</textarea>
+      </div>
+      <div class="slot-foot" id="sf-${s.id}">
+        <span class="sf-tag">paste resume text to detect skills</span>
+      </div>`;
+    el.appendChild(d);
+    if(s.text) refreshFoot(s.id,s.text);
+  });
+  document.getElementById('slot-cnt').textContent=`${pasteSlots.length} resume${pasteSlots.length!==1?'s':''}`;
+}
+function updatePasteText(id,val){
+  const s=pasteSlots.find(x=>x.id===id);
+  if(s){s.text=val;refreshFoot(id,val);}
+}
+function refreshFoot(id,text){
+  const el=document.getElementById(`sf-${id}`);if(!el)return;
+  const sk=extractSkillsUI(text).slice(0,6);
+  const exp=extractExp(text);
+  el.innerHTML=sk.map(s=>`<span class="sf-tag on">${s}</span>`).join('')
+    +(sk.length===0?'<span class="sf-tag">no skills detected yet</span>':'')
+    +(exp>0?`<span class="sf-tag" style="margin-left:auto">${exp} yrs</span>`:'');
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  SLIDERS
+// ─────────────────────────────────────────────────────────────────────────
+document.getElementById('thresh').oninput=function(){document.getElementById('thresh-val').textContent=(this.value/100).toFixed(2);};
+document.getElementById('topn').oninput=function(){document.getElementById('topn-val').textContent=this.value;};
+
+// ─────────────────────────────────────────────────────────────────────────
+//  NLP ENGINE (TF-IDF + Cosine Similarity in-browser)
+// ─────────────────────────────────────────────────────────────────────────
+const STOPS=new Set([
+  'the','a','an','and','or','but','in','on','at','to','for','of','with','by','from','as',
+  'is','was','are','were','be','been','being','have','has','had','do','does','did',
+  'will','would','could','should','may','might','i','we','you','he','she','it','they',
+  'me','us','him','her','them','my','our','your','his','its','their',
+  'this','that','these','those','who','which','what','when','where','why','how',
+  'all','each','every','both','few','more','most','some','any','such','no','not','only',
+  'same','so','than','too','very','just','about','above','after','again','against',
+  'also','back','before','between','down','during','here','into','much','now','off',
+  'other','out','over','own','through','under','up','while','experience','years','year',
+  'strong','knowledge','using','used','use','built','build','developed','develop','led',
+  'lead','implemented','created','managed','work','working','worked','seeking','looking',
+]);
+
+function norm(txt){
+  return txt.toLowerCase()
+    .replace(/c\+\+/g,'cpp').replace(/scikit[\-\s]?learn/g,'scikitlearn')
+    .replace(/hugging[\s-]?face/g,'huggingface').replace(/computer[\s-]vision/g,'computervision')
+    .replace(/image[\s-]processing/g,'imageprocessing').replace(/vertex[\s-]ai/g,'vertexai')
+    .replace(/node\.?js/gi,'nodejs').replace(/ci\/?cd/gi,'cicd')
+    .replace(/[^a-z0-9\s]/g,' ');
+}
+function tokenize(txt){return norm(txt).split(/\s+/).filter(t=>t.length>2&&!STOPS.has(t));}
+function buildTfIdf(corpus){
+  const tok=corpus.map(tokenize);
+  const df={};
+  tok.forEach(doc=>[...new Set(doc)].forEach(t=>{df[t]=(df[t]||0)+1;}));
+  const N=corpus.length,idf={};
+  Object.keys(df).forEach(t=>{idf[t]=Math.log((N+1)/(df[t]+1))+1;});
+  return tok.map(doc=>{
+    const tf={},vec={};
+    doc.forEach(t=>{tf[t]=(tf[t]||0)+1;});
+    Object.keys(tf).forEach(t=>{vec[t]=(tf[t]/doc.length)*(idf[t]||1);});
+    return vec;
+  });
+}
+function cosSim(a,b){
+  const keys=new Set([...Object.keys(a),...Object.keys(b)]);
+  let dot=0,na=0,nb=0;
+  keys.forEach(k=>{const av=a[k]||0,bv=b[k]||0;dot+=av*bv;na+=av*av;nb+=bv*bv;});
+  return(!na||!nb)?0:dot/(Math.sqrt(na)*Math.sqrt(nb));
+}
+function extractSkillsUI(txt){const n=norm(txt)+' ';return ALL_SKILLS.filter(sk=>n.includes(sk));}
+function extractExp(txt){const m=txt.match(/(\d+)\s*\+?\s*years?/i);return m?parseInt(m[1]):0;}
+function extractEmail(txt){const m=txt.match(/[\w.\-]+@[\w.\-]+\.\w+/);return m?m[0]:'';}
+function radarScores(txt){const n=norm(txt)+' ';return RADAR_AXES.map(ax=>{const h=ax.skills.filter(sk=>n.includes(sk)).length;return Math.min(h/ax.skills.length,1);});}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  ANALYSIS
+// ─────────────────────────────────────────────────────────────────────────
+function showErr(msg){
+  const e=document.getElementById('err');
+  e.textContent=msg;e.style.display='block';
+  setTimeout(()=>{e.style.display='none';},5000);
+}
+
+async function runAnalysis(){
+  const jd=document.getElementById('jd').value.trim();
+  if(!jd){showErr('Please enter a job description.');return;}
+
+  // collect candidates from active tab
+  let candidates=[];
+  if(activeTab==='upload'){
+    const ready=uploadedFiles.filter(f=>f.status==='done'&&f.text.trim());
+    if(ready.length<2){showErr('Please upload at least 2 resumes (wait for parsing to finish).');return;}
+    candidates=ready.map(f=>({name:f.name||f.originalName,text:f.text,source:f.originalName}));
+  } else {
+    const valid=pasteSlots.filter(s=>s.text.trim());
+    if(valid.length<2){showErr('Please add at least 2 resumes to compare.');return;}
+    candidates=valid.map(s=>({name:s.name||`Candidate`,text:s.text,source:'pasted'}));
+  }
+
+  document.getElementById('run-btn').disabled=true;
+  document.getElementById('results').style.display='none';
+  document.getElementById('loading').style.display='block';
+
+  const lbls=['Reading uploaded files','Tokenizing & cleaning text','Building TF-IDF vectors','Computing cosine similarity','Ranking & shortlisting'];
+  for(let i=0;i<5;i++){
+    await wait(240);
+    if(i>0){const p=document.getElementById(`ls${i}`);p.className='ls ok';p.textContent='✓ '+lbls[i-1];}
+    const c=document.getElementById(`ls${i+1}`);c.className='ls run';c.textContent='▶ '+lbls[i];
+  }
+  await wait(240);
+
+  const corpus=[jd,...candidates.map(c=>c.text)];
+  const vecs=buildTfIdf(corpus);
+  const thresh=parseInt(document.getElementById('thresh').value)/100;
+  const topN=parseInt(document.getElementById('topn').value);
+
+  const ranked=candidates.map((c,i)=>{
+    const score=cosSim(vecs[0],vecs[i+1]);
+    const skills=extractSkillsUI(c.text);
+    return{
+      name:c.name,text:c.text,source:c.source,
+      score:Math.round(score*10000)/10000,
+      scorePct:Math.round(score*1000)/10,
+      skills,exp:extractExp(c.text),
+      email:extractEmail(c.text),
+      radar:radarScores(c.text),
+      shortlisted:false,
+    };
+  });
+  ranked.sort((a,b)=>b.score-a.score);
+  ranked.forEach((c,i)=>{c.rank=i+1;});
+  if(topN>0) ranked.slice(0,topN).forEach(c=>c.shortlisted=true);
+  else ranked.forEach(c=>{c.shortlisted=c.score>=thresh;});
+
+  const last=document.getElementById('ls5');
+  last.className='ls ok';last.textContent='✓ '+lbls[4];
+  await wait(180);
+
+  document.getElementById('loading').style.display='none';
+  document.getElementById('run-btn').disabled=false;
+  resetLoadSteps();
+
+  renderResults(ranked);
+  document.getElementById('results').style.display='block';
+  document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function wait(ms){return new Promise(r=>setTimeout(r,ms));}
+function resetLoadSteps(){
+  const lbls=['Reading uploaded files','Tokenizing & cleaning text','Building TF-IDF vectors','Computing cosine similarity','Ranking & shortlisting'];
+  lbls.forEach((_,i)=>{const el=document.getElementById(`ls${i+1}`);el.className='ls';el.textContent='○ '+lbls[i];});
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  RENDER RESULTS
+// ─────────────────────────────────────────────────────────────────────────
+function renderResults(cands){
+  renderWinner(cands);
+  renderRanked(cands);
+  renderRadar(cands);
+  renderMatrix(cands);
+  renderSummary(cands);
+}
+
+function renderWinner(cands){
+  const w=cands[0];
+  document.getElementById('w-name').textContent=w.name;
+  document.getElementById('w-big').textContent=w.scorePct.toFixed(1)+'%';
+  const items=[
+    {k:'Score',      v:w.score.toFixed(4)},
+    {k:'Skills',     v:w.skills.length+' detected'},
+    {k:'Experience', v:w.exp>0?w.exp+' yrs':'—'},
+    {k:'Email',      v:w.email||'—'},
+    {k:'Ahead of #2',v:cands.length>1?'+'+(w.scorePct-cands[1].scorePct).toFixed(1)+'%':'—'},
+  ];
+  document.getElementById('w-meta').innerHTML=items.map(x=>`<div class="w-mi"><div class="k">${x.k}</div><div class="v">${x.v}</div></div>`).join('');
+  document.getElementById('w-skills').innerHTML=
+    w.skills.slice(0,10).map(s=>`<span class="ws-tag">${s}</span>`).join('')
+    +(w.skills.length>10?`<span class="ws-tag">+${w.skills.length-10} more</span>`:'');
+}
+
+function renderRanked(cands){
+  const g=document.getElementById('rgrid');g.innerHTML='';
+  cands.forEach((c,idx)=>{
+    const rc=c.rank<=3?`r${c.rank}`:'';
+    const bc=c.rank<=3?`rb${c.rank}`:'rbn';
+    const bf=c.rank<=3?`bf${c.rank}`:'bfn';
+    const em=['🥇','🥈','🥉'][c.rank-1]||`#${c.rank}`;
+    const col=PAL[Math.min(c.rank-1,7)];
+    const d=document.createElement('div');
+    d.className=`rcard ${rc}`;d.style.animationDelay=`${idx*70}ms`;
+    d.innerHTML=`
+      <div class="rc-top">
+        <div class="rc-badge ${bc}">${em}</div>
+        <div>
+          <div class="rc-name">${esc(c.name)}</div>
+          <div class="rc-status ${c.shortlisted?'yes':'no'}">${c.shortlisted?'✓ SHORTLISTED':'✗ NOT SELECTED'}</div>
+          ${c.source&&c.source!=='pasted'?`<div class="rc-file-badge">📄 ${esc(c.source)}</div>`:''}
+        </div>
+      </div>
+      <div class="rc-bar-row">
+        <div class="rc-bar-track"><div class="rc-bar-fill ${bf}" style="width:0" data-w="${c.scorePct}%"></div></div>
+        <div class="rc-pct" style="color:${col}">${c.scorePct.toFixed(1)}%</div>
+      </div>
+      <div class="rc-skills">
+        ${c.skills.slice(0,8).map((s,i)=>`<span class="rsk ${i<3?'hi':i<5?'hi2':''}">${s}</span>`).join('')}
+        ${c.skills.length>8?`<span class="rsk">+${c.skills.length-8}</span>`:''}
+      </div>
+      <div class="rc-foot">
+        <span>${c.skills.length} skills</span>
+        <span>${c.exp>0?c.exp+' yrs exp':c.email||''}</span>
+      </div>`;
+    g.appendChild(d);
+  });
+  requestAnimationFrame(()=>setTimeout(()=>{document.querySelectorAll('.rc-bar-fill[data-w]').forEach(el=>el.style.width=el.dataset.w);},80));
+}
+
+function renderRadar(cands){
+  const top=cands.slice(0,Math.min(4,cands.length));
+  const cvs=document.getElementById('radarCanvas');
+  const mob=window.innerWidth<500;
+  const SZ=mob?280:460;cvs.width=SZ;cvs.height=Math.round(SZ*0.78);
+  const ctx=cvs.getContext('2d');
+  const cx=SZ/2,cy=cvs.height/2,R=SZ*0.33,N=RADAR_AXES.length,step=(Math.PI*2)/N;
+  ctx.clearRect(0,0,SZ,cvs.height);
+  for(let ring=1;ring<=4;ring++){
+    ctx.beginPath();
+    for(let i=0;i<=N;i++){const a=i*step-Math.PI/2,r=R*ring/4;i===0?ctx.moveTo(cx+r*Math.cos(a),cy+r*Math.sin(a)):ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));}
+    ctx.closePath();ctx.strokeStyle=ring===4?'#1e2d3d':'#111820';ctx.lineWidth=1;ctx.stroke();
+  }
+  for(let i=0;i<N;i++){const a=i*step-Math.PI/2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+R*Math.cos(a),cy+R*Math.sin(a));ctx.strokeStyle='#1e2d3d';ctx.lineWidth=1;ctx.stroke();}
+  ctx.fillStyle='#7a9bb0';ctx.font=`400 ${mob?9.5:11}px 'DM Mono',monospace`;ctx.textAlign='center';ctx.textBaseline='middle';
+  RADAR_AXES.forEach((ax,i)=>{const a=i*step-Math.PI/2,LR=R+(mob?18:24);ctx.fillText(ax.label,cx+LR*Math.cos(a),cy+LR*Math.sin(a));});
+  top.forEach((c,ci)=>{
+    const col=PAL[ci];
+    ctx.beginPath();
+    c.radar.forEach((v,i)=>{const a=i*step-Math.PI/2,r=v*R;i===0?ctx.moveTo(cx+r*Math.cos(a),cy+r*Math.sin(a)):ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));});
+    ctx.closePath();ctx.fillStyle=col+'25';ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.stroke();
+    c.radar.forEach((v,i)=>{const a=i*step-Math.PI/2;ctx.beginPath();ctx.arc(cx+v*R*Math.cos(a),cy+v*R*Math.sin(a),3,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();});
+  });
+  document.getElementById('rleg').innerHTML=top.map((c,i)=>`<div class="rleg"><div class="rleg-dot" style="background:${PAL[i]}"></div><span>${esc(c.name)}</span></div>`).join('');
+}
+
+function renderMatrix(cands){
+  const top=cands.slice(0,Math.min(5,cands.length));
+  const tbl=document.getElementById('mtable');
+  let html=`<thead><tr><th>Skill</th>${top.map(c=>`<th class="center">${esc(c.name.split(' ')[0])}</th>`).join('')}</tr></thead><tbody>`;
+  const disp=s=>s.replace(/cicd/,'CI/CD').replace(/scikitlearn/,'scikit-learn')
+    .replace(/computervision/,'computer vision').replace(/huggingface/,'Hugging Face')
+    .replace(/imageprocessing/,'image processing').replace(/vertexai/,'Vertex AI')
+    .replace(/nodejs/,'Node.js');
+  Object.entries(SKILL_CATS).forEach(([cat,sks])=>{
+    html+=`<tr class="mcat"><td colspan="${top.length+1}">${cat}</td></tr>`;
+    sks.forEach(sk=>{
+      const cells=top.map(c=>`<td class="mcheck"><span class="${c.skills.includes(sk)?'myes':'mno'}">${c.skills.includes(sk)?'●':'○'}</span></td>`);
+      html+=`<tr><td class="skill-cell">${disp(sk)}</td>${cells.join('')}</tr>`;
+    });
+  });
+  tbl.innerHTML=html+'</tbody>';
+}
+
+function renderSummary(cands){
+  const w=cands[0],sl=cands.filter(c=>c.shortlisted).length;
+  const avg=cands.reduce((s,c)=>s+c.score,0)/cands.length;
+  const gap=cands.length>1?w.scorePct-cands[1].scorePct:0;
+  const items=[
+    {k:'Best Candidate',v:w.name,                   s:'Highest match score',accent:true},
+    {k:'Match Score',   v:w.scorePct.toFixed(1)+'%',s:`Raw: ${w.score.toFixed(4)}`},
+    {k:'Shortlisted',   v:`${sl} / ${cands.length}`,s:'Top candidates'},
+    {k:'Avg Score',     v:(avg*100).toFixed(1)+'%', s:'All resumes'},
+    {k:'Winner Margin', v:`+${gap.toFixed(1)}%`,    s:'Over #2 candidate'},
+    {k:'Top Skills',    v:`${w.skills.length}`,     s:'Skills detected'},
+    {k:'Experience',    v:w.exp>0?`${w.exp} yrs`:'—',s:'Winner experience'},
+    {k:'Email',         v:w.email||'—',             s:'Contact'},
+  ];
+  document.getElementById('sgrid').innerHTML=items.map(x=>`
+    <div class="sitem ${x.accent?'accent':''}">
+      <div class="sk">${x.k}</div><div class="sv">${x.v}</div><div class="ss">${x.s}</div>
+    </div>`).join('');
+}
+
+function resetAll(){
+  document.getElementById('results').style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  INIT — start with empty upload panel, add one default paste slot
+// ─────────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded',()=>{
+  addSlot(); // one blank slot ready in paste mode
+  renderFileList();
+});
+</script>
+</body>
+</html>
