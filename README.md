@@ -229,18 +229,6 @@ flask-cors>=4.0.0
 
 ---
 
-## ⚠️ Limitations
-
-| Limitation | Workaround |
-|------------|-----------|
-| Scanned PDF (image-based) | Use OCR first; or paste text manually |
-| Binary `.doc` files | Save as `.docx` or `.txt` first |
-| Non-English resumes | Not supported (English spaCy model only) |
-| Semantic synonyms | TF-IDF is keyword-based, not semantic |
-| Max ~50 PDFs in browser | Use Python CLI for large batches |
-
----
-
 ## 📁 Output Files (CLI mode)
 
 | File | Format | Contents |
